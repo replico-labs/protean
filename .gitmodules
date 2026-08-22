@@ -1,0 +1,9 @@
+[submodule "contracts"]
+	path = contracts
+	url = https://github.com/MarvinSunday/Spaces.git
+[submodule "bot"]
+	path = bot
+	url = https://github.com/MarvinSunday/protean-bot.git
+[submodule "connect"]
+	path = connect
+	url = https://github.com/MarvinSunday/protean-connect.git
