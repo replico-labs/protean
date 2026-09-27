@@ -4,6 +4,3 @@
 [submodule "bot"]
 	path = bot
 	url = https://github.com/replico-labs/protean-bot.git
-[submodule "connect"]
-	path = connect
-	url = https://github.com/replico-labs/protean-web.git
