@@ -205,7 +205,4 @@ Wallets are custodial: the bot's backend can decrypt any user's key, in exchange
 - **Telegram:** [@proteandao_bot](https://t.me/proteandao_bot)
 - **Discord:** [Add to your server](https://discord.com/oauth2/authorize?client_id=1550697784259121203&permissions=3072&integration_type=0&scope=applications.commands+bot)
 - **Slack:** [Add to Slack](https://protean-bot-production.up.railway.app/slack/install)
-
-## License
-
-MIT — Marvin Sunday. `spaces/src/governance/futarchy/DecisionMarketPair.sol` derives from Uniswap V2 core and is GPL-3.0-or-later.
+- **WhatsApp:** [Add to WhatsApp](https://wa.me/message/6JNHAJABFJY6M1)
