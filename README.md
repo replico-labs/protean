@@ -1,115 +1,117 @@
-# Protean
+# protean-site — Landing Page & Docs
 
-A governance-agnostic DAO framework, made native to Telegram. Deploy a DAO,
-get a wallet, stake, propose, and vote — all from inside a group chat, on any EVM Chain.
+The public-facing marketing and documentation site for Protean —
+the governance layer for social messengers.
 
-This is the umbrella repository. It holds no code of its own — just three
-git submodules, each an independently deployable project, tied together
-here for convenience.
+## What this is
 
-## The three pieces
+A single, self-contained static HTML page (`index.html`) covering two
+things:
 
-| Submodule | What it is | Status |
+- **Home** — what Protean is, how it works, the ten governance models
+  plus Opportunity Market, the five use cases, where it's deployed, and
+  a "Get started" section linking to the live bots.
+- **Docs** — architecture, a full writeup of every governance model,
+  Opportunity Market, the Guard Wrapper, the complete command
+  reference, and real, verified factory contract addresses per chain.
+
+No React, no build step, no bundler — plain HTML/CSS/JS, with Google
+Fonts (Inter + JetBrains Mono) loaded via `<link>`. This was a
+deliberate choice: this site has no wallet-connect flow, no backend
+data of its own, and no interactivity beyond switching between two
+views and smooth-scrolling to an anchor — a full framework would be
+more machinery than the actual job needs.
+
+## Brand
+
+Colors, type, and the logo (`public/logo-mark.svg`,
+`public/logo-wordmark.svg`, `public/favicon.svg`) all match the
+project's real, established identity — deep violet background
+(`#12072a`), lilac accent (`#b39cf5`), a classical column/temple mark.
+If the brand changes, the color tokens are all defined once, at the
+top of `index.html`'s `<style>` block, under `:root`.
+
+## Running it locally
+
+No install or build step needed:
+
+```bash
+python -m http.server 8000
+```
+
+or open `index.html` directly in a browser. Either works, since there's
+no server-side logic at all.
+
+## Deploying
+
+Built for Vercel as a plain static site — no framework, no build
+command. `vercel.json` explicitly sets `framework: null` and
+`buildCommand: null` so Vercel's zero-config detection doesn't get
+confused by the `public/` folder (a common convention for build output
+in other frameworks) into looking for a compiled site that doesn't
+exist here.
+
+Deploy via the Vercel dashboard (import the repo) or the CLI:
+
+```bash
+npx vercel --prod
+```
+
+Any other static host (Netlify, GitHub Pages) would also work directly
+off `index.html` with no changes.
+
+## Updating content
+
+Everything — copy, the command reference, chain addresses — lives
+directly in `index.html`. There's no CMS or data file to edit
+separately. Search for the relevant section by its `id` (`#models`,
+`#applications`, `#bots`, `#chains`, `#doc-commands`, etc.) and edit
+the HTML in place.
+
+### Adding a chain's factory addresses
+
+Each verified address in the docs' "Chains & contracts" section links
+directly to that chain's own block explorer, using the pattern
+`<explorer>/address/<address>`:
+
+| Network | Chain ID | Explorer |
 |---|---|---|
-| [`contracts`](https://github.com/MarvinSunday/Spaces) | The on-chain governance protocol: token, staking wrapper, treasury, governance, factory, welcome distributor | ✅ Fully built, tested, currently deployed to Monad Testnet |
-| [`bot`](https://github.com/MarvinSunday/protean-bot) | The Telegram bot — every user-facing command, wallet generation, and on-chain interaction | ✅ Live, write-capable (stake/propose/vote), custodial wallet model |
-| [`connect`](https://github.com/MarvinSunday/protean-connect) | A wallet-linking website for a non-custodial alternative via Privy | ⏸️ Paused mid-debugging, not currently used by the bot |
+| Monad testnet | 10143 | `https://testnet.monadvision.com` |
+| Base Sepolia | 84532 | `https://sepolia.basescan.org` |
+| HyperEVM testnet | 998 | `https://testnet.hyperevm-explorer.xyz` |
+| Ethereum Sepolia | 11155111 | `https://sepolia.etherscan.io` |
 
-Each has its own README with full detail — this file is just the map.
+When a new chain is added, confirm its real explorer URL first rather
+than reusing another chain's pattern, since each explorer has its own
+domain and URL shape.
 
-## How it fits together
+### Bot links
 
-```
-Telegram Group
-      │
-      ▼
-  bot/  ───────────────────────────────┐
-  - all commands (/dao, /stake,        │
-    /propose, /vote, /createdao, etc)   │
-  - generates a wallet for every        │
-    Telegram user on the spot           │
-  - signs and submits transactions       │
-      │                                  │
-      ▼                                  ▼
-  contracts/                        connect/
-  - Governance, Treasury,           - Telegram OAuth via Privy
-    GovernanceToken,                - would create a genuinely
-    StakedGovernanceToken,            non-custodial wallet instead
-    DAOFactory,                     - not currently wired in;
-    WelcomeDistributor               bot uses its own wallet
-                                      generation instead (see below)
-```
+All three platform cards in `#bots` (Telegram, Discord, Slack) are live
+and link to their real install/invite URLs. To change a link, edit the
+`href` on that platform's `<a class="bot-cta live">` directly. To add a
+new platform later, copy an existing card and, until its link exists,
+use a muted placeholder instead: `<span class="bot-cta">Add to X —
+coming soon</span>`, then swap it for a real `<a class="bot-cta live"
+href="...">` once the link is ready.
 
-## Why this exists
+Note that the Discord invite URL contains `&amp;` rather than `&` —
+that's correct HTML for an ampersand inside an attribute, and browsers
+decode it back to a normal `&` when the link is clicked.
 
-Most EVM chains handle DAO governance one of two ways: **Snapshot**
-(off-chain — votes aren't binding, someone still has to manually execute
-what was decided), or a **custom-built governance system** that's hard to
-get right and, once deployed, is usually locked in — changing the rules
-later means migrating the entire treasury.
+## Proposal pages
 
-Protean's contracts solve both: everything a DAO votes on executes
-automatically, fully on-chain, and governance can evolve over time
-(the treasury and the governance rules are deliberately kept as separate,
-swappable pieces) without ever moving the treasury.
+`proposal.html` is the page for one DAO proposal, at `/p/<network>/<dao>/<id>` (the rewrite is in `vercel.json`). The bot links to it after every proposal and in `/proposal <id>`.
 
-On top of that, most DAO tooling assumes you're already deep in Web3 — a
-separate dashboard, a wallet extension, gas in hand before you can do
-anything. Protean puts all of that inside the chat people are already in.
+- **Data comes from the bot**, not from this site: the page fetches `GET <bot>/api/proposals/<network>/<dao>/<id>` for the proposer's details and live on-chain state (refreshed every 20 seconds), and the edit form `POST`s back there. The bot's URL is the `protean-api` meta tag at the top of `proposal.html` - change it there if the bot moves.
+- **Details are submitted once**, only through the private link the bot sends the proposer (`?edit=<signed token>`, checked by the bot), and never change afterwards. They can only be submitted before anyone votes or backs the proposal, within 72 hours.
+- **No secrets here.** Everything sensitive (the signing secret, Supabase) lives in the bot. Everything a proposer writes is rendered as text, never HTML.
+- The bot needs `PROPOSAL_SITE_URL` set to this site's URL (it builds the links from it, and only accepts requests from it).
 
-## Current wallet model — read this before assuming how it works
+## Related repositories
 
-The bot currently uses **custodial, deterministically-derived wallets**
-(`bot/src/wallet.js`) — every Telegram user's wallet is computed on the
-spot from their Telegram ID and one server-side secret. No third-party
-wallet provider, no OAuth step, works instantly. The tradeoff: the bot's
-backend can, in principle, regenerate any user's private key.
-
-The `connect/` submodule is the intended path to a genuinely
-**non-custodial** alternative (Privy-based embedded wallets), but it's
-currently blocked mid-debugging and not wired into the bot. See
-`connect/README.md` for exactly where that stands and what's needed to
-finish it.
-
-## Getting started
-
-```bash
-git clone --recurse-submodules https://github.com/replico-labs/protean.git
-cd protean
-```
-
-If you already cloned without `--recurse-submodules`:
-```bash
-git submodule update --init --recursive
-```
-
-Each submodule has its own setup instructions — see:
-- `contracts/README.md` — Foundry setup, testing, deployment
-- `bot/README.md` — env vars, running locally, deploying to Railway
-- `connect/README.md` — Privy setup, current debugging status
-
-## Keeping submodules in sync
-
-This repo only tracks *pointers* to specific commits in each of the three
-real repos. After pushing changes to any of them individually, update the
-umbrella's pointers:
-
-```bash
-git submodule update --remote --merge
-git add contracts bot connect
-git commit -m "Sync submodules"
-git push origin main
-```
-
-Deployment platforms (Railway, Vercel) are configured against each
-individual repo directly, not this umbrella — see each submodule's own
-README for deployment instructions.
-
-## Try it live
-
-[**@proteandao_bot**](https://t.me/proteandao_bot) on Telegram — assuming
-the bot backend is currently deployed and running (see `bot/README.md`).
-
-## License
-
-MIT
+- **Governance contracts** (Solidity, Foundry)
+- **Bot** (Node.js — Telegram, Discord, Slack interfaces)
+- **protean-connect** — a separate, paused project for non-custodial
+  wallet linking via Privy; not currently used by the bot, unrelated
+  to this site

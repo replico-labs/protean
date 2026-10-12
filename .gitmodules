@@ -1,6 +1,9 @@
-[submodule "contracts"]
-	path = contracts
+[submodule "spaces"]
+	path = spaces
 	url = https://github.com/replico-labs/Spaces.git
 [submodule "bot"]
 	path = bot
 	url = https://github.com/replico-labs/protean-bot.git
+[submodule "vortexes"]
+	path = vortexes
+	url = https://github.com/replico-labs/Vortexes.git
