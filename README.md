@@ -8,7 +8,7 @@ This is the umbrella repository. It holds no code of its own — just three subm
 |---|---|---|---|
 | [`bot/`](https://github.com/replico-labs/protean-bot) | `protean-bot` | The bot: every chat command, wallets, gas sponsorship, notifications, the proposal-page API | Node.js, viem, grammY, discord.js, Slack Bolt, Baileys |
 | [`spaces/`](https://github.com/replico-labs/Spaces) | `Spaces` | **DAO Spaces** — the EVM contracts: ten governance models, tokens, treasuries, factories, wrappers, the Opportunity Market | Solidity, Foundry |
-| [`vortexes/`](https://github.com/replico-labs/Vortexes) | `Vortexes` | **DAO Vortexes** — the Solana programs: a hub that holds treasuries, and six governance models | Rust, Anchor, LiteSVM |
+| [`vortexes/`](https://github.com/replico-labs/Vortexes) | `Vortexes` | **DAO Vortexes** — the Solana programs: a hub that holds treasuries, and all ten governance models | Rust, Anchor, LiteSVM |
 
 The website — every proposal's page, where proposers add the details — lives in [`protean-today`](https://github.com/replico-labs/protean-today), a separate repository that isn't a submodule here.
 
@@ -19,9 +19,9 @@ The website — every proposal's page, where proposers add the details — lives
 | **Monad testnet** | All ten models deployed; every model's full lifecycle passes live (votes, challenges, conviction budgets, elections and recalls, a Pyth Entropy draw, a Pyth-priced Sowellian outcome, a decision-market finalization) |
 | **Base Sepolia** | All ten models deployed and verified live, same test |
 | **HyperEVM testnet** | All ten models deployed and verified live, same test |
-| **Solana devnet** | Six models deployed (Vortexes); every model has run a real proposal; token-weighted run end to end through the bot |
+| **Solana devnet** | All ten models deployed (Vortexes, eleven programs with the hub); every model passed the devnet smoke test, including an ORAO randomness draw, a Pyth-priced Sowellian outcome and a finished model switch; token-weighted run end to end through the bot |
 | **Sepolia** | Opportunity Market (Zama FHE) run end to end through Telegram |
-| **Platforms** | Telegram and WhatsApp live; Discord and Slack built and tested on local chains, awaiting real-workspace runs |
+| **Platforms** | All four live: Telegram, Discord, Slack and WhatsApp |
 | **Mainnets** | Supported in code, nothing deployed |
 
 ## How it fits together
@@ -92,14 +92,14 @@ flowchart LR
 |---|---|:-:|:-:|
 | **Token-weighted** | Stake tokens; quorum and approval threshold | ✓ | ✓ |
 | **Quadratic** | Same, but n staked tokens give √n votes | ✓ | ✓ |
-| **Liquid** | Token-weighted, with vote delegation chains | ✓ | |
+| **Liquid** | Token-weighted, with vote delegation chains | ✓ | ✓ |
 | **Optimistic** | Passes unless someone posts a bond to challenge it; challenged proposals go to a vote | ✓ | ✓ |
 | **Conviction** | Support builds up over time; per-asset spending budgets raise the bar | ✓ | ✓ |
 | **Board** | M-of-N signer multisig, no token | ✓ | ✓ |
 | **Delegate** | Members elect a council for a term; the council votes; members can recall | ✓ | ✓ |
-| **Sortition** | A council drawn at random (Pyth Entropy) from staked members | ✓ | |
-| **Sowellian** | Approve, then bet on the outcome; resolved by people or a Pyth price | ✓ | |
-| **Decision Markets** | Futarchy: pass and fail markets trade, the higher TWAP decides | ✓ | |
+| **Sortition** | A council drawn at random from staked members (Pyth Entropy on EVM, ORAO VRF on Solana) | ✓ | ✓ |
+| **Sowellian** | Approve, then bet on the outcome; resolved by people or a Pyth price | ✓ | ✓ |
+| **Decision Markets** | Futarchy: pass and fail markets trade, the higher TWAP decides | ✓ | ✓ |
 
 ## A proposal, end to end
 
@@ -133,9 +133,31 @@ Other models swap the vote step for their own (`/challenge`, `/support`, `/confi
 | Monad testnet | 10143 | MON | The default network. Monad charges the full gas limit, so every write is simulated and sent with a measured limit |
 | Base Sepolia | 84532 | ETH | Contracts built with the `size-limited` profile (EIP-170) |
 | HyperEVM testnet | 998 | HYPE | `size-limited`; factories deployed in big blocks; the bot keeps under the 2M-gas small blocks and the 8-pending-nonce mempool rule |
-| Solana devnet | — | SOL | Vortexes; the six Solana models |
+| Solana devnet | — | SOL | Vortexes; all ten models |
 | Ethereum Sepolia | 11155111 | ETH | Opportunity Market only (Zama's FHE coprocessor) |
 | Monad, Base, HyperEVM mainnets | 143, 8453, 999 | | Supported, not deployed |
+
+## What the bot does
+
+Beyond creating DAOs and running their proposals:
+
+- **Every model's steps as buttons** on Telegram, Discord and Slack (votes, challenges, Sowellian phases, decision-market trading and redeeming), with amount menus and an "are you sure?" before anything that posts a bond. Notices about new proposals and closed votes carry the same buttons. ([Commands](https://github.com/replico-labs/protean-bot/blob/main/docs/commands.md))
+- **Charts in the chat:** vote results, the Decision Markets pass and fail prices with the bar to beat, and the Sowellian approval, backing and adjudication, posted with notices and `/proposal`. ([Proposals and notifications](https://github.com/replico-labs/protean-bot/blob/main/docs/proposals-and-notifications.md))
+- **Proposal pages** on the website, where the proposer adds the details, with an edit password and version history.
+- **Model switching:** a DAO changes how it decides by vote and keeps its treasury, on EVM and Solana.
+- **External protocol actions by proposal:** Uniswap V4, Aave V3, Perpl, shMON, OpenSea and Nad.fun on Monad; Aerodrome, Avantis, Aave V3, Lido wstETH, OpenSea and Flaunch on Base; HyperCore, HyperSwap, HyperLend, Kinetiq, OpenSea and Flaunch on HyperEVM. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md))
+- **Perps:** the Treasury trades Perpl (Monad) or HyperCore (HyperEVM) by vote (`/perps`).
+- **Trading desks** (`/desk`): the group appoints traders by proposal, and each trades from the chat within a voted mandate (markets, position sizes, a desk-wide total, leverage, an optional daily loss limit, how long), with pause, `/desk mine` and PnL cards. On Perpl each trader gets a Treasury-owned desk account that can trade but never withdraw; on HyperCore the bot holds the trading keys, and Hyperliquid's own rules (checked on testnet) stop an agent moving the Treasury's funds. Tested end to end on local chains; not yet run live. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md))
+- **Opportunity Markets:** confidential bets, encrypted with Zama FHE on Sepolia.
+
+## Roadmap and designs
+
+Planned, designed, not built yet; each doc lists its open decisions:
+
+- [Spin-up groups](https://github.com/replico-labs/protean-bot/blob/main/docs/spinup-design.md): escrow, survey and launch groups on Telegram, Discord, Slack and WhatsApp (where the bot can create small groups itself), always in spaces the users own
+- [Protean Escrow](https://github.com/replico-labs/protean-bot/blob/main/docs/escrow-design.md): a multisig per deal with the bot as the last signer, arbitrators ruling through it, and OTC swaps of tokens and NFTs
+- [Survey groups](https://github.com/replico-labs/protean-bot/blob/main/docs/survey-design.md): reward structures beyond "winner only", sealed until resolution, and statistics that never expose a bet
+- [Launch](https://github.com/replico-labs/protean-bot/blob/main/docs/launch-design.md): the website tools for fundraising, token distribution, the DAO registry and perps whitelisting
 
 ## Repository layout
 
@@ -144,15 +166,16 @@ protean/
 ├── bot/        protean-bot — Node.js
 │   ├── src/                 commands, platforms, governance adapters, wallets
 │   ├── src/solana/          Vortexes client
-│   └── scripts/             test-evm-models.mjs (live lifecycle test), explain-tx.mjs, …
+│   ├── docs/                commands, platforms, trading, testing, and the design docs
+│   └── scripts/             test-evm-models.mjs (live lifecycle test), the desk tests, explain-tx.mjs, …
 ├── spaces/     Spaces — Foundry
 │   ├── src/                 governance models, factories, tokens, treasury, wrappers, oracles
-│   ├── test/                592 Foundry tests
+│   ├── test/                Foundry tests
 │   └── script/              deploy scripts, hyperevm_big_blocks.py
 └── vortexes/   Vortexes — Anchor
-    ├── programs/            hub + six governance programs
+    ├── programs/            hub + ten governance programs
     ├── crates/vortex-core/  shared library
-    ├── tests/               52 end-to-end tests in LiteSVM
+    ├── tests/               end-to-end tests in LiteSVM
     └── scripts/smoke/       devnet smoke test
 ```
 
