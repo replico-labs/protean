@@ -19,10 +19,11 @@ The website — every proposal's page, where proposers add the details — lives
 | **Monad testnet** | All ten models deployed; every model's full lifecycle passes live (votes, challenges, conviction budgets, elections and recalls, a Pyth Entropy draw, a Pyth-priced Sowellian outcome, a decision-market finalization) |
 | **Base Sepolia** | All ten models deployed and verified live, same test |
 | **HyperEVM testnet** | All ten models deployed and verified live, same test |
-| **Solana devnet** | All ten models deployed (Vortexes, eleven programs with the hub); every model passed the devnet smoke test, including an ORAO randomness draw, a Pyth-priced Sowellian outcome and a finished model switch; token-weighted run end to end through the bot |
+| **Solana devnet** | All ten models deployed (Vortexes, twelve programs with the hub and the fill program); every model passed the devnet smoke test, including an ORAO randomness draw, a Pyth-priced Sowellian outcome and a finished model switch, and so did fill orders; token-weighted run end to end through the bot |
+| **Solana protocols** | Every Solana action (Jito, Marinade, Jupiter Lend, Kamino, Pump.fun, Tensor, Jupiter swaps, the Phoenix desk) passed as a proposal a DAO's Treasury executes through the hub, on a mainnet fork in LiteSVM: 26 of 26 in one run |
 | **Sepolia** | Opportunity Market (Zama FHE) run end to end through Telegram |
 | **Platforms** | All four live: Telegram, Discord, Slack and WhatsApp |
-| **Mainnets** | Supported in code, nothing deployed |
+| **Mainnets** | Supported in code (Monad, Base, HyperEVM and Solana), nothing deployed |
 
 ## How it fits together
 
@@ -79,12 +80,12 @@ flowchart LR
         GP[Governance program<br/>of the chosen model]
         H -->|confirm_execution?| GP
         GP -->|proposal passed| H
-        H -->|runs the instructions,<br/>signed by the treasury| X[Payments, mints,<br/>model switches]
+        H -->|runs the instructions,<br/>signed by the treasury| X[Payments, mints,<br/>protocol actions,<br/>model switches]
     end
 ```
 
 - **Spaces:** every DAO is a set of EIP-1167 clones made in one transaction by its model's factory. The Treasury trusts one governance address; switching models is a passed proposal calling `transferGovernance`. Optional wrappers add an NFT-marketplace signer and a GuardWrapper security council.
-- **Vortexes:** a Solana treasury can only be signed for by the program that owns it, so one hub program holds every DAO's treasury and record, and governance programs only decide. Switching models takes a passed proposal plus a 2-day delay, and bumps the DAO's epoch so old proposals can never run.
+- **Vortexes:** a Solana treasury can only be signed for by the program that owns it, so one hub program holds every DAO's treasury and record, and governance programs only decide. Switching models takes a passed proposal plus a 2-day delay, and bumps the DAO's epoch so old proposals can never run. A separate fill program lets a treasury swap through any route (Jupiter's included): a proposal opens an order with a minimum, a keeper fills it at execution time, and the fill reverts unless the treasury gets at least that minimum.
 
 ## Governance models
 
@@ -133,9 +134,10 @@ Other models swap the vote step for their own (`/challenge`, `/support`, `/confi
 | Monad testnet | 10143 | MON | The default network. Monad charges the full gas limit, so every write is simulated and sent with a measured limit |
 | Base Sepolia | 84532 | ETH | Contracts built with the `size-limited` profile (EIP-170) |
 | HyperEVM testnet | 998 | HYPE | `size-limited`; factories deployed in big blocks; the bot keeps under the 2M-gas small blocks and the 8-pending-nonce mempool rule |
-| Solana devnet | — | SOL | Vortexes; all ten models |
+| Solana devnet | — | SOL | Vortexes; all ten models and fill orders |
 | Ethereum Sepolia | 11155111 | ETH | Opportunity Market only (Zama's FHE coprocessor) |
 | Monad, Base, HyperEVM mainnets | 143, 8453, 999 | | Supported, not deployed |
+| Solana mainnet | — | SOL | Supported, not deployed; the Solana protocol actions are mainnet-only and tested on a mainnet fork |
 
 ## What the bot does
 
@@ -145,9 +147,9 @@ Beyond creating DAOs and running their proposals:
 - **Charts in the chat:** vote results, the Decision Markets pass and fail prices with the bar to beat, and the Sowellian approval, backing and adjudication, posted with notices and `/proposal`. ([Proposals and notifications](https://github.com/replico-labs/protean-bot/blob/main/docs/proposals-and-notifications.md))
 - **Proposal pages** on the website, where the proposer adds the details, with an edit password and version history.
 - **Model switching:** a DAO changes how it decides by vote and keeps its treasury, on EVM and Solana.
-- **External protocol actions by proposal:** Uniswap V4, Aave V3, Perpl, shMON, OpenSea and Nad.fun on Monad; Aerodrome, Avantis, Aave V3, Lido wstETH, OpenSea and Flaunch on Base; HyperCore, HyperSwap, HyperLend, Kinetiq, OpenSea and Flaunch on HyperEVM. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md))
-- **Perps:** the Treasury trades Perpl (Monad) or HyperCore (HyperEVM) by vote (`/perps`).
-- **Trading desks** (`/desk`): the group appoints traders by proposal, and each trades from the chat within a voted mandate (markets, position sizes, a desk-wide total, leverage, an optional daily loss limit, how long), with pause, `/desk mine` and PnL cards. On Perpl each trader gets a Treasury-owned desk account that can trade but never withdraw; on HyperCore the bot holds the trading keys, and Hyperliquid's own rules (checked on testnet) stop an agent moving the Treasury's funds. Tested end to end on local chains; not yet run live. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md))
+- **External protocol actions by proposal:** Uniswap V4, Aave V3, Perpl, shMON, OpenSea and Nad.fun on Monad; Aerodrome, Avantis, Aave V3, Lido wstETH, OpenSea and Flaunch on Base; HyperCore, HyperSwap, HyperLend, Kinetiq, OpenSea and Flaunch on HyperEVM; Jito and Marinade staking, Jupiter Lend and Kamino lending and borrowing, Pump.fun, Tensor and Jupiter swaps (through fill orders) on Solana. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md), [Solana integrations](https://github.com/replico-labs/protean-bot/blob/main/docs/solana-integrations.md))
+- **Perps:** the Treasury trades Perpl (Monad) or HyperCore (HyperEVM) by vote (`/perps`); on Solana, Phoenix through the desk.
+- **Trading desks** (`/desk`): the group appoints traders by proposal, and each trades from the chat within a voted mandate (markets, position sizes, a desk-wide total, leverage, an optional daily loss limit, how long), with pause, `/desk mine` and PnL cards. On Perpl each trader gets a Treasury-owned desk account that can trade but never withdraw; on HyperCore the bot holds the trading keys, and Hyperliquid's own rules (checked on testnet) stop an agent moving the Treasury's funds; on Phoenix (Solana) each trader trades the Treasury's isolated subaccounts with a bot-held key that can trade but not withdraw. Tested end to end on local chains and, for Phoenix, a mainnet fork; not yet run live. ([Trading](https://github.com/replico-labs/protean-bot/blob/main/docs/trading.md))
 - **Opportunity Markets:** confidential bets, encrypted with Zama FHE on Sepolia.
 
 ## Roadmap and designs
@@ -167,13 +169,13 @@ protean/
 │   ├── src/                 commands, platforms, governance adapters, wallets
 │   ├── src/solana/          Vortexes client
 │   ├── docs/                commands, platforms, trading, testing, and the design docs
-│   └── scripts/             test-evm-models.mjs (live lifecycle test), the desk tests, explain-tx.mjs, …
+│   └── scripts/             test-evm-models.mjs (live lifecycle test), test-hub-mainnet-fork.mjs (Solana protocols), the desk tests, …
 ├── spaces/     Spaces — Foundry
 │   ├── src/                 governance models, factories, tokens, treasury, wrappers, oracles
 │   ├── test/                Foundry tests
 │   └── script/              deploy scripts, hyperevm_big_blocks.py
 └── vortexes/   Vortexes — Anchor
-    ├── programs/            hub + ten governance programs
+    ├── programs/            hub + ten governance programs + fill (swap orders)
     ├── crates/vortex-core/  shared library
     ├── tests/               end-to-end tests in LiteSVM
     └── scripts/smoke/       devnet smoke test
@@ -204,6 +206,8 @@ Then follow each project's own README:
 cd spaces && FOUNDRY_PROFILE=size-limited forge test               # the contracts
 cd bot && node scripts/test-evm-models.mjs --network base-sepolia  # every model's lifecycle, live
 cd vortexes && anchor build && cargo test                          # the Solana programs
+cd bot && VORTEXES_DEPLOY_DIR=../vortexes/target/deploy SOLANA_MAINNET_RPC_URL=<rpc> \
+  node --experimental-test-module-mocks scripts/test-hub-mainnet-fork.mjs  # every Solana protocol action, on a mainnet fork
 ```
 
 ## Keeping the submodules current
